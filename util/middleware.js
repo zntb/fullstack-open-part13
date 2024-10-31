@@ -16,15 +16,14 @@ const errorHandler = (error, req, res, next) => {
   logger.error(error.message);
 
   if (error.name === 'SequelizeValidationError') {
-    return res
-      .status(400)
-      .send({ error: 'Validation error: Please check the data provided.' });
+    const validationErrors = error.errors.map(err => err.message);
+    return res.status(400).json({ error: validationErrors });
   }
 
-  if (error.name === 'SequelizeDatabaseError') {
+  if (error.name === 'SequelizeUniqueConstraintError') {
     return res
-      .status(500)
-      .json({ error: 'An error occurred while accessing the database.' });
+      .status(409)
+      .send({ error: 'A user with the same email already exists.' });
   }
 
   res.status(500).json({ error: 'An internal server error occurred.' });
