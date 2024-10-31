@@ -19,28 +19,34 @@ router.post('/', tokenExtractor, userExtractor, async (req, res) => {
     return res.status(401).send({ error: 'Unauthorized: Please log in.' });
   }
 
-  try {
-    const newBlog = await Blog.create({
-      title,
-      url,
-      likes,
-      user_id: req.user.id,
-    });
-    res.status(201).json(newBlog);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+  const newBlog = await Blog.create({
+    title,
+    url,
+    likes: likes || 0,
+    user_id: req.user.id,
+  });
+
+  res.status(201).json(newBlog);
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', tokenExtractor, userExtractor, async (req, res) => {
   const { id } = req.params;
-  const deletedCount = await Blog.destroy({ where: { id } });
 
-  if (deletedCount === 0) {
-    return res.status(404).json({ error: 'Blog not found.' });
+  const blog = await Blog.findByPk(id);
+
+  if (!blog) {
+    return res.status(404).json({ error: 'Blog not found' });
   }
-  res.status(204).send();
-  console.log(`Blog with id ${id} deleted.`);
+
+  if (blog.user_id !== req.user.id) {
+    return res
+      .status(403)
+      .json({ error: 'Unauthorized: You can only delete your own blogs' });
+  }
+
+  await blog.destroy();
+  res.status(204).end();
+  console.log('Blog deleted');
 });
 
 module.exports = router;
