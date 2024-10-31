@@ -1,41 +1,35 @@
 require('express-async-errors');
 const router = require('express').Router();
 const { Blog } = require('../models');
+const { tokenExtractor, userExtractor } = require('../util/middleware');
 
 router.get('/', async (req, res) => {
   const blogs = await Blog.findAll();
   res.json(blogs);
 });
 
-router.post('/', async (req, res) => {
-  const { author, url, title, likes } = req.body;
+router.post('/', tokenExtractor, userExtractor, async (req, res) => {
+  const { url, title, likes } = req.body;
 
   if (!url || !title) {
-    throw new Error('URL and title are required.');
+    return res.status(400).send({ error: 'URL and title are required.' });
   }
 
-  const newBlog = await Blog.create({ author, url, title, likes });
-  res.status(201).json(newBlog);
-});
-
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { likes } = req.body;
-
-  if (typeof likes !== 'number') {
-    throw new Error('Likes must be a number.');
+  if (!req.user) {
+    return res.status(401).send({ error: 'Unauthorized: Please log in.' });
   }
 
-  const blog = await Blog.findByPk(id);
-
-  if (!blog) {
-    return res.status(404).json({ error: 'Blog not found.' });
+  try {
+    const newBlog = await Blog.create({
+      title,
+      url,
+      likes,
+      user_id: req.user.id,
+    });
+    res.status(201).json(newBlog);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
-
-  blog.likes = likes;
-  await blog.save();
-
-  res.json(blog);
 });
 
 router.delete('/:id', async (req, res) => {
