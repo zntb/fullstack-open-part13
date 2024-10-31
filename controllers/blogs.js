@@ -1,12 +1,7 @@
-require('dotenv').config();
-const express = require('express');
-const sequelize = require('./db');
-const Blog = require('./models/Blog');
+const router = require('express').Router();
+const { Blog } = require('../models');
 
-const app = express();
-app.use(express.json());
-
-app.get('/api/blogs', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const blogs = await Blog.findAll();
     res.json(blogs);
@@ -15,8 +10,9 @@ app.get('/api/blogs', async (req, res) => {
   }
 });
 
-app.post('/api/blogs', async (req, res) => {
+router.post('/', async (req, res) => {
   const { author, url, title, likes } = req.body;
+
   if (!url || !title) {
     return res.status(400).json({ error: 'URL and title are required.' });
   }
@@ -29,7 +25,7 @@ app.post('/api/blogs', async (req, res) => {
   }
 });
 
-app.delete('/api/blogs/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const deletedCount = await Blog.destroy({ where: { id } });
@@ -45,12 +41,4 @@ app.delete('/api/blogs/:id', async (req, res) => {
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, async () => {
-  try {
-    await sequelize.authenticate();
-    console.log(`Server is running on http://localhost:${PORT}`);
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
-  }
-});
+module.exports = router;
