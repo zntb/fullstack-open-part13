@@ -1,6 +1,6 @@
 require('express-async-errors');
 const router = require('express').Router();
-const { User } = require('../models');
+const { User, Blog } = require('../models');
 
 router.post('/', async (req, res) => {
   const { name, username } = req.body;
@@ -14,7 +14,9 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
-  const users = await User.findAll();
+  const users = await User.findAll({
+    include: [{ model: Blog, attributes: ['title', 'url', 'likes'] }],
+  });
   res.json(users);
 });
 
