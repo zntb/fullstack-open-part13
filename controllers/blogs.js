@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 
     where[Op.or] = [
       { title: { [Op.iLike]: searchKeyword } },
-      { user_id: { [Op.in]: matchingUserIds } },
+      { userId: { [Op.in]: matchingUserIds } },
     ];
   }
 
@@ -29,6 +29,7 @@ router.get('/', async (req, res) => {
       model: User,
       attributes: ['name', 'username'],
     },
+    attributes: { exclude: ['userId'] },
     where,
     order: [['likes', 'DESC']],
   });
@@ -51,7 +52,7 @@ router.post('/', tokenExtractor, userExtractor, async (req, res) => {
     title,
     url,
     likes: likes || 0,
-    user_id: req.user.id,
+    userId: req.user.id,
   });
 
   res.status(201).json(newBlog);
@@ -66,7 +67,7 @@ router.delete('/:id', tokenExtractor, userExtractor, async (req, res) => {
     return res.status(404).json({ error: 'Blog not found' });
   }
 
-  if (blog.user_id !== req.user.id) {
+  if (blog.userId !== req.user.id) {
     return res
       .status(403)
       .json({ error: 'Unauthorized: You can only delete your own blogs' });

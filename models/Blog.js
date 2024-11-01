@@ -10,6 +10,7 @@ Blog.init(
       primaryKey: true,
       autoIncrement: true,
     },
+
     title: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -22,7 +23,7 @@ Blog.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-    user_id: {
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
