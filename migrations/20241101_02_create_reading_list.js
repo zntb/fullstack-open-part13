@@ -4,24 +4,24 @@ module.exports = {
   up: async ({ context: queryInterface }) => {
     await queryInterface.createTable('readinglists', {
       id: {
-        type: Sequelize.INTEGER,
+        type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      userId: {
-        type: Sequelize.INTEGER,
+      user_id: {
+        type: DataTypes.INTEGER,
         references: {
-          model: 'Users',
+          model: 'users',
           key: 'id',
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
         allowNull: false,
       },
-      blogId: {
-        type: Sequelize.INTEGER,
+      blog_id: {
+        type: DataTypes.INTEGER,
         references: {
-          model: 'Blogs',
+          model: 'blogs',
           key: 'id',
         },
         onUpdate: 'CASCADE',
@@ -29,12 +29,20 @@ module.exports = {
         allowNull: false,
       },
       read: {
-        type: Sequelize.BOOLEAN,
+        type: DataTypes.BOOLEAN,
         defaultValue: false,
         allowNull: false,
       },
-      createdAt: Sequelize.DATE,
-      updatedAt: Sequelize.DATE,
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: new Date(),
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: new Date(),
+      },
     });
   },
 

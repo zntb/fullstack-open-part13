@@ -43,6 +43,7 @@ ReadingList.init(
   {
     sequelize,
     modelName: 'readinglist',
+    tableName: 'readinglists',
     underscored: true,
   },
 );
