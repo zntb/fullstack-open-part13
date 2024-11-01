@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', tokenExtractor, userExtractor, async (req, res) => {
-  const { url, title, likes } = req.body;
+  const { url, title, likes, year } = req.body;
 
   if (!url || !title) {
     return res.status(400).send({ error: 'URL and title are required.' });
@@ -48,10 +48,17 @@ router.post('/', tokenExtractor, userExtractor, async (req, res) => {
     return res.status(401).send({ error: 'Unauthorized: Please log in.' });
   }
 
+  if (year && (year < 1991 || year > new Date().getFullYear())) {
+    return res.status(400).json({
+      error: `Year must be between 1991 and ${new Date().getFullYear()}.`,
+    });
+  }
+
   const newBlog = await Blog.create({
     title,
     url,
     likes: likes || 0,
+    year: year || new Date().getFullYear(),
     userId: req.user.id,
   });
 
