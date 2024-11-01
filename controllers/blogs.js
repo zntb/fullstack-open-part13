@@ -8,9 +8,20 @@ router.get('/', async (req, res) => {
   const where = {};
 
   if (req.query.search) {
-    where.title = {
-      [Op.iLike]: `%${req.query.search}%`,
-    };
+    const searchKeyword = `%${req.query.search}%`;
+
+    const matchingUsers = await User.findAll({
+      where: {
+        name: { [Op.iLike]: searchKeyword },
+      },
+    });
+
+    const matchingUserIds = matchingUsers.map(user => user.id);
+
+    where[Op.or] = [
+      { title: { [Op.iLike]: searchKeyword } },
+      { user_id: { [Op.in]: matchingUserIds } },
+    ];
   }
 
   const blogs = await Blog.findAll({
