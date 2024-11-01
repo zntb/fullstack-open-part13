@@ -1,6 +1,6 @@
 require('express-async-errors');
 const router = require('express').Router();
-const { User, Blog } = require('../models');
+const { User, Blog, ReadingList } = require('../models');
 
 router.post('/', async (req, res) => {
   const { name, username } = req.body;
@@ -20,29 +20,41 @@ router.get('/', async (req, res) => {
   res.json(users);
 });
 
-router.get('/:id', async (req, res) => {
-  const user = await User.findByPk(req.params.id, {
-    attributes: ['name', 'username'],
-    include: [
-      {
-        model: Blog,
-        as: 'readings',
-        attributes: ['id', 'url', 'title', 'likes', 'year'],
-        through: { attributes: [] },
-        include: {
-          model: User,
-          as: 'author',
-          attributes: ['name'],
+router.get('/:id', async (req, res, next) => {
+  try {
+    const where = {};
+    if (req.query.read) {
+      where.read = req.query.read;
+    }
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: [''] },
+      include: [
+        {
+          model: Blog,
+          attributes: { exclude: ['userId'] },
         },
-      },
-    ],
-  });
-
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+        {
+          model: Blog,
+          as: 'readings',
+          attributes: { exclude: ['userId'] },
+          through: {
+            as: 'readinglists',
+            attributes: {
+              exclude: ['userId', 'blogId', 'createdAt', 'updatedAt'],
+            },
+            where,
+          },
+        },
+      ],
+    });
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).end();
+    }
+  } catch (err) {
+    next(err);
   }
-
-  res.json(user);
 });
 
 router.put('/:username', async (req, res) => {
