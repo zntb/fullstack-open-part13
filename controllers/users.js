@@ -20,36 +20,44 @@ router.get('/', async (req, res) => {
   res.json(users);
 });
 
-router.get('/:id', async (req, res, next) => {
-  const where = {};
-  if (req.query.read) {
-    where.read = req.query.read;
-  }
-  const user = await User.findByPk(req.params.id, {
-    attributes: { exclude: [''] },
-    include: [
-      {
-        model: Blog,
-        attributes: { exclude: ['userId'] },
-      },
-      {
-        model: Blog,
-        as: 'readings',
-        attributes: { exclude: ['userId'] },
-        through: {
+router.get('/:id', async (req, res) => {
+  const userId = req.params.id;
+  const readFilter = req.query.read;
+
+  try {
+    const user = await User.findByPk(userId, {
+      include: [
+        {
+          model: ReadingList,
           as: 'readinglists',
-          attributes: {
-            exclude: ['userId', 'blogId', 'createdAt', 'updatedAt'],
-          },
-          where,
+          include: [
+            {
+              model: Blog,
+              as: 'blog',
+              attributes: ['id', 'title', 'url', 'likes', 'year'],
+            },
+          ],
         },
-      },
-    ],
-  });
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).end();
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (readFilter) {
+      const isRead = readFilter === 'true';
+      user.readinglists = user.readinglists.filter(
+        readingList => readingList.read === isRead,
+      );
+    }
+
+    res.json(user.readinglists);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: 'An error occurred while fetching user information.' });
   }
 });
 

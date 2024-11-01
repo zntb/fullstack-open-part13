@@ -22,7 +22,7 @@ ReadingList.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'blog',
+        model: 'blogs',
         key: 'id',
       },
     },
