@@ -1,7 +1,7 @@
 const logger = require('./logger');
 const jwt = require('jsonwebtoken');
 const { SECRET } = require('./config');
-const { User } = require('../models');
+const { User, Session } = require('../models');
 
 const requestLogger = (req, res, next) => {
   logger.info('Method:', req.method);
@@ -48,10 +48,31 @@ const userExtractor = async (req, res, next) => {
   next();
 };
 
+const sessionValidator = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: 'Token required' });
+
+    const session = await Session.findOne({ where: { token } });
+    if (!session) return res.status(401).json({ error: 'Invalid session' });
+
+    const user = await User.findOne({ where: { id: session.userId } });
+    if (user.disabled)
+      return res.status(403).json({ error: 'User access disabled' });
+
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Session validation error' });
+  }
+};
+
 module.exports = {
   requestLogger,
   unknownEndpoint,
   errorHandler,
   tokenExtractor,
   userExtractor,
+  sessionValidator,
 };
